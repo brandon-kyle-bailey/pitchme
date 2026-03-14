@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "compdoc": "npx @compodoc/compodoc -p tsconfig.json -s -d ../../docs/api",
     "up": "docker compose -f docker-compose.yml up -d",
-    "up:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up -d",
+    "up:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up --build -d",
     "down:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml down -v"
   },
   "dependencies": {
@@ -57,6 +57,7 @@
     "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.2.8",
+    "cacheable": "^2.3.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "compression": "^1.8.1",

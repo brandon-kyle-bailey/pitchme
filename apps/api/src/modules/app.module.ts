@@ -1,16 +1,57 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CacheModule } from '@nestjs/cache-manager';
+import { Keyv } from 'keyv';
+import { CacheableMemory } from 'cacheable';
+import KeyvRedis from '@keyv/redis';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
+    }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('DATABASE_HOST', 'postgres'),
+        port: 5432,
+        username: config.get<string>('DATABASE_USER', 'postgres'),
+        password: config.get<string>('DATABASE_PASSWORD', 'postgres'),
+        database: config.get<string>('DATABASE_NAME', 'db'),
+        entities: [],
+        synchronize: true,
+        autoLoadEntities: true,
+        retryAttempts: 10,
+        retryDelay: 5000,
+      }),
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      // eslint-disable-next-line @typescript-eslint/require-await
+      useFactory: async (configService: ConfigService) => {
+        const url = configService.get<string>(
+          'REDIS_URL',
+          'redis://redis:6379',
+        );
+        return {
+          stores: [
+            new Keyv({ store: new KeyvRedis(url), ttl: 5_000 }),
+            new Keyv({
+              store: new CacheableMemory({ ttl: 5_000, lruSize: 5_000 }),
+            }),
+          ],
+        };
+      },
     }),
     HttpModule,
     ScheduleModule.forRoot(),
@@ -24,6 +65,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
         },
       ],
     }),
+    UsersModule,
   ],
   controllers: [],
   providers: [],
