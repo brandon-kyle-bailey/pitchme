@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - '5433:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - appnet
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: pitchme
+    env_file:
+      - .env
+
+volumes:
+  db-data:
+
+networks:
+  appnet:
+    driver: bridge
