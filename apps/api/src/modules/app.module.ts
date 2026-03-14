@@ -11,6 +11,7 @@ import { Keyv } from 'keyv';
 import { CacheableMemory } from 'cacheable';
 import KeyvRedis from '@keyv/redis';
 import { UsersModule } from './users/users.module';
+import { User } from './users/entities/user.entity';
 
 @Module({
   imports: [
@@ -22,13 +23,12 @@ import { UsersModule } from './users/users.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DATABASE_HOST', 'postgres'),
-        port: 5432,
-        username: config.get<string>('DATABASE_USER', 'postgres'),
-        password: config.get<string>('DATABASE_PASSWORD', 'postgres'),
-        database: config.get<string>('DATABASE_NAME', 'db'),
-        entities: [],
-        synchronize: true,
+        url: config.get<string>(
+          'DATABASE_URL',
+          'postgresql://postgres:postgres@postgres:5432/db',
+        ),
+        entities: [User],
+        synchronize: process.env.NODE_ENV !== 'production',
         autoLoadEntities: true,
         retryAttempts: 10,
         retryDelay: 5000,
