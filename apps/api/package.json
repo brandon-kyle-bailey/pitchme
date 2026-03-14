@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "compdoc": "npx @compodoc/compodoc -p tsconfig.json -s -d ../../docs/api",
     "up": "docker compose -f docker-compose.yml up -d",
-    "up:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up",
+    "up:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml up -d",
     "down:local": "docker compose -f docker-compose.yml -f docker-compose.local.yml down -v"
   },
   "dependencies": {

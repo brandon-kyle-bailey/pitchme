@@ -2,14 +2,15 @@ services:
   api:
     build:
       context: .
-      dockerfile: infrastructure/dockerfiles/Dockerfile
-    container_name: api
+      dockerfile: infra/dockerfiles/api.Dockerfile
+    container_name: pitch-me
+    restart: unless-stopped
     expose:
       - '8080'
-    networks:
-      - appnet
     env_file:
       - .env
+    networks:
+      - appnet
 
   redis:
     image: redis:7-alpine
@@ -19,24 +20,35 @@ services:
       - redis-data:/data
     networks:
       - appnet
-    env_file:
-      - .env
 
   nginx:
     image: nginx:alpine
     container_name: nginx
+    restart: unless-stopped
     ports:
       - '80:80'
       - '443:443'
     volumes:
-      - ./infrastructure/dockerfiles/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./infrastructure/certs:/etc/ssl/certs:ro
+      - ./infra/nginx/nginx.production.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
     depends_on:
       - api
     networks:
       - appnet
-    env_file:
-      - .env
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
+    entrypoint: >
+      sh -c "trap exit TERM;
+             while :;
+             do certbot renew;
+             sleep 12h & wait $${!};
+             done"
 
 networks:
   appnet:
@@ -44,3 +56,5 @@ networks:
 
 volumes:
   redis-data:
+  certbot-www:
+  certbot-conf:

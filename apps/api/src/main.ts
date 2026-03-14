@@ -5,18 +5,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
-import { AppModule } from './app.module';
-// import fs from 'fs';
-
-// const httpsOptions = {
-//   key: fs.readFileSync('./infrastructure/certs/private-key.pem'),
-//   cert: fs.readFileSync('./infrastructure/certs/public-certificate.pem'),
-// };
+import { AppModule } from './modules/app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    // httpsOptions,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get<ConfigService>(ConfigService);
   app.enableVersioning({
     type: VersioningType.URI,
