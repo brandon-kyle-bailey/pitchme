@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Role } from './user.domain';
 
 @Entity('users')
 export class User {
@@ -13,7 +14,7 @@ export class User {
   id: number;
 
   @Column({ type: 'uuid', unique: true, default: () => 'gen_random_uuid()' })
-  public_id: string;
+  account_id: string;
 
   @Column({ unique: true })
   email: string;
@@ -26,6 +27,9 @@ export class User {
 
   @Column({ nullable: true })
   refresh_token?: string;
+
+  @Column({ type: 'enum', enum: Role, default: Role.User })
+  role: Role;
 
   @CreateDateColumn()
   createdAt: Date;

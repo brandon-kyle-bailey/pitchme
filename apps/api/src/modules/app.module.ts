@@ -1,17 +1,19 @@
+import KeyvRedis from '@keyv/redis';
+import { HttpModule } from '@nestjs/axios';
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CacheModule } from '@nestjs/cache-manager';
-import { Keyv } from 'keyv';
 import { CacheableMemory } from 'cacheable';
-import KeyvRedis from '@keyv/redis';
-import { UsersModule } from './users/users.module';
+import { Keyv } from 'keyv';
+import { AuthModule } from './auth/auth.module';
 import { User } from './users/entities/user.entity';
+import { UsersModule } from './users/users.module';
+import { CaslModule } from './casl/casl.module';
 
 @Module({
   imports: [
@@ -66,6 +68,8 @@ import { User } from './users/entities/user.entity';
       ],
     }),
     UsersModule,
+    AuthModule,
+    CaslModule,
   ],
   controllers: [],
   providers: [],

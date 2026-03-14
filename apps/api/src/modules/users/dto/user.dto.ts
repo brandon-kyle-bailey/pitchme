@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -8,9 +9,14 @@ import {
   IsUUID,
   MinLength,
 } from 'class-validator';
+import { Exclude } from 'class-transformer';
 import { Role } from '../entities/user.domain';
 
-export class CreateUserDto {
+export class UserDto {
+  constructor(partial: Partial<UserDto>) {
+    Object.assign(this, partial);
+  }
+
   @ApiProperty({ description: 'The email address of the user' })
   @IsEmail()
   email: string;
@@ -42,4 +48,16 @@ export class CreateUserDto {
   @IsUUID()
   @IsOptional()
   updatedBy?: string;
+
+  @IsDateString()
+  @IsOptional()
+  createdAt?: Date;
+
+  @IsDateString()
+  @IsOptional()
+  updatedAt?: Date;
+
+  @IsDateString()
+  @IsOptional()
+  deletedAt?: Date;
 }
