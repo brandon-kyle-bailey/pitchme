@@ -14,7 +14,7 @@ services:
     build:
       context: .
       dockerfile: infra/dockerfiles/api.Dockerfile
-    container_name: pitch-me
+    container_name: api
     restart: unless-stopped
     depends_on:
       - redis
