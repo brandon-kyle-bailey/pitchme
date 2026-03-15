@@ -1,14 +1,12 @@
 variable "digitalocean_token" {
-  type        = string
-  description = "digital Ocean api token"
+  type      = string
+  sensitive = true
 }
 
 variable "ssh_fingerprint" {
-  type        = string
-  description = "Fingerprint of the SSH key uploaded to DigitalOcean"
+  type = string
 }
 
 variable "ssh_ip" {
-  type        = string
-  description = "Your local public IP address"
+  type = string
 }
