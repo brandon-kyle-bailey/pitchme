@@ -26,7 +26,7 @@ import { CaslModule } from './casl/casl.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get<string>(
-          'DATABASE_URL',
+          'DATABASE_URL_PROD',
           'postgresql://postgres:postgres@postgres:5432/db',
         ),
         entities: [User],
@@ -59,14 +59,23 @@ import { CaslModule } from './casl/casl.module';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     CqrsModule.forRoot(),
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          limit: 9999999999,
-          ttl: 6000,
-        },
-      ],
-    }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 10,
+      },
+      {
+        name: 'medium',
+        ttl: 60000,
+        limit: 100,
+      },
+      {
+        name: 'long',
+        ttl: 3600000,
+        limit: 1000,
+      },
+    ]),
     UsersModule,
     AuthModule,
     CaslModule,

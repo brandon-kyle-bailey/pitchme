@@ -17,18 +17,26 @@ async function bootstrap() {
   app.use(compression());
   app.use(helmet());
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-  app.enableCors();
+  app.enableCors({
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? configService.get<string>('ALLOWED_ORIGINS')?.split(',') || []
+        : true,
+    credentials: true,
+  });
   app.set('trust proxy', 'loopback'); // Trust requests from the loopback address
 
-  const config = new DocumentBuilder()
-    .setTitle('Core API')
-    .setDescription('The Core API.')
-    .setVersion('1.0')
-    .addTag('core')
-    .addBearerAuth()
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Core API')
+      .setDescription('The Core API.')
+      .setVersion('1.0')
+      .addTag('core')
+      .addBearerAuth()
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, documentFactory);
+  }
 
   await app.listen(configService.get<string>('PORT') ?? 8080, '0.0.0.0');
 }

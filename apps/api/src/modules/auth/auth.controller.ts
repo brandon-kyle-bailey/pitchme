@@ -4,7 +4,10 @@ import {
   Controller,
   Inject,
   Post,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { NIL } from 'uuid';
@@ -16,6 +19,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
 @Controller({ path: 'auth', version: '1' })
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(
     @Inject(AuthService) private readonly authService: AuthService,
@@ -24,26 +28,34 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @Throttle({
+    short: { limit: 5, ttl: 1000 },
+    medium: { limit: 20, ttl: 60000 },
+  })
   async login(@Body() body: LoginDto) {
     const user = await this.authService.validateUser(
       body.username,
       body.password,
     );
     if (!user) {
-      throw new BadRequestException();
+      throw new UnauthorizedException('Invalid credentials');
     }
     return await this.authService.login(user);
   }
 
   @Post('register')
+  @Throttle({
+    short: { limit: 3, ttl: 1000 },
+    medium: { limit: 10, ttl: 60000 },
+  })
   async register(@Body() body: RegisterDto) {
     if (body.password !== body.confirmPassword) {
-      throw new BadRequestException();
+      throw new BadRequestException('Passwords do not match');
     }
     const createUserDto = new CreateUserDto();
     createUserDto.name = body.name;
     createUserDto.email = body.username;
-    createUserDto.password = bcrypt.hashSync(body.password, 10);
+    createUserDto.password = await bcrypt.hash(body.password, 10);
     createUserDto.role = Role.Owner;
     createUserDto.createdBy = NIL;
     const user = await this.dataSource.transaction(async (manager) => {

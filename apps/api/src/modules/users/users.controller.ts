@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -34,6 +35,8 @@ import { User as UserModel } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { FindAllResponseDto } from 'src/libs/dtos/src/find-all-response.dto';
 
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'email', 'name'];
+
 @Controller({ path: 'users', version: '1' })
 @UseInterceptors(ControllerCacheInterceptor, ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard, PoliciesGuard)
@@ -51,7 +54,7 @@ export class UsersController {
   @Post()
   @CheckPolicies((ability: AppAbility) => ability.can(Action.Create, User))
   async create(@Body() createUserDto: CreateUserDto) {
-    const password = bcrypt.hashSync(createUserDto.password, 10);
+    const password = await bcrypt.hash(createUserDto.password, 10);
     return this.mapper.toInterface(
       await this.service.create({ ...createUserDto, password, createdBy: NIL }),
     );
@@ -83,9 +86,17 @@ export class UsersController {
     @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
     @Request() req: { user: User },
   ): Promise<FindAllResponseDto<{ [key: string]: any }>> {
+    if (sortField && !ALLOWED_SORT_FIELDS.includes(sortField)) {
+      throw new BadRequestException(
+        `Invalid sortField. Allowed: ${ALLOWED_SORT_FIELDS.join(', ')}`,
+      );
+    }
     if (!['asc', 'desc'].includes(sortOrder)) {
       sortOrder = 'desc';
     }
+    const ability = await this.caslAbilityFactory.createForUser(
+      req.user.account_id,
+    );
     const result = await this.service.findAll(
       skip,
       take,
@@ -94,9 +105,6 @@ export class UsersController {
       },
       sortField ? (sortField as keyof UserModel) : undefined,
       sortOrder,
-    );
-    const ability = await this.caslAbilityFactory.createForUser(
-      req.user.account_id,
     );
     return {
       ...result,

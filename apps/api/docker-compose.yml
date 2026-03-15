@@ -9,6 +9,12 @@ services:
       - redis-data:/data
     networks:
       - appnet
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   api:
     build:
@@ -17,13 +23,20 @@ services:
     container_name: api
     restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     expose:
       - '8080'
     env_file:
       - .env
     networks:
       - appnet
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:8080/api']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   nginx:
     image: nginx:alpine

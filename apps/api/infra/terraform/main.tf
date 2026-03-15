@@ -13,12 +13,24 @@ provider "digitalocean" {
 }
 
 resource "digitalocean_droplet" "pitch_me" {
-  name     = "pitch-me"
-  region   = "nyc3"
+  name     = "pitch-me-api"
+  region   = "nyc1"
   size     = "s-1vcpu-2gb"
   image    = "ubuntu-24-04-x64"
   ssh_keys = [var.ssh_fingerprint]
   tags     = ["api", "docker"]
+
+  user_data = <<-EOF
+              #cloud-config
+              runcmd:
+                - apt update && apt install -y ca-certificates curl gnupg lsb-release
+                - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+                - apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+                - usermod -aG docker ubuntu
+                - systemctl enable docker
+                - systemctl start docker
+              EOF
 }
 
 resource "digitalocean_firewall" "api_fw" {
@@ -28,7 +40,7 @@ resource "digitalocean_firewall" "api_fw" {
   inbound_rule {
     protocol         = "tcp"
     port_range       = "22"
-    source_addresses = ["YOUR_IP_HERE/32"]
+    source_addresses = [var.ssh_ip]
   }
 
   inbound_rule {
