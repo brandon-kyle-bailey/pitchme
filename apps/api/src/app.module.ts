@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import KeyvRedis from '@keyv/redis';
+import { HttpModule } from '@nestjs/axios';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheableMemory } from 'cacheable';
 import { Keyv } from 'keyv';
@@ -14,24 +14,25 @@ import { UsersModule } from './modules/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      cache: true,
       isGlobal: true,
       expandVariables: true,
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
+      envFilePath: ['.env.local', '.env'],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const production = config.get('NODE_ENV') === 'production';
         return {
           type: 'postgres',
-          host: config.get<string>('DATABASE_HOST', 'db'),
-          port: config.get<number>('DATABASE_PORT', 5432),
-          username: config.get<string>('DATABASE_USER', 'postgres'),
-          password: config.get<string>('DATABASE_PASSWORD', 'postgres'),
-          database: config.get<string>('DATABASE_NAME', 'core'),
-          synchronize: !production,
+          url: config.get<string>(
+            'DATABASE_URL',
+            'postgres://postgres:postgres@postgres:5432/core',
+          ),
+          synchronize: false,
           autoLoadEntities: true,
-          migrations: [],
-          migrationsRun: production,
+          migrations: [__dirname + '/migrations/*.js'],
+          migrationsRun: true,
           retryAttempts: 10,
           retryDelay: 5000,
         };
@@ -40,11 +41,10 @@ import { UsersModule } from './modules/users/users.module';
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
-      // eslint-disable-next-line @typescript-eslint/require-await
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         const redisUrl = configService.get<string>(
           'REDIS_URL',
-          'redis://localhost:6379',
+          'redis://redis:6379',
         );
         return {
           stores: [
@@ -56,6 +56,24 @@ import { UsersModule } from './modules/users/users.module';
         };
       },
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1_000,
+        limit: 10,
+      },
+      {
+        name: 'medium',
+        ttl: 60_000,
+        limit: 100,
+      },
+      {
+        name: 'long',
+        ttl: 3_600_000,
+        limit: 1_000,
+      },
+    ]),
+    HttpModule,
     UsersModule,
     AuthModule,
     HealthModule,

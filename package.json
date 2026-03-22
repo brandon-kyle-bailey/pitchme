@@ -19,5 +19,9 @@
   "packageManager": "npm@11.9.0",
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1"
+  }
 }

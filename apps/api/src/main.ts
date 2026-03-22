@@ -1,3 +1,5 @@
+import 'class-validator';
+import 'class-transformer';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -16,7 +18,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api/core');
   app.use(compression());
   app.use(helmet());
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
   app.enableCors({
     origin: configService.get<string>('ALLOWED_ORIGINS'),
     credentials: true,
