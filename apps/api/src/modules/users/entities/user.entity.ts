@@ -10,11 +10,8 @@ import { Role } from './user.domain';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
-
-  @Column({ type: 'uuid', unique: true, default: () => 'gen_random_uuid()' })
-  account_id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ unique: true })
   email: string;
@@ -26,7 +23,7 @@ export class User {
   password: string;
 
   @Column({ nullable: true })
-  refresh_token?: string;
+  refreshToken?: string;
 
   @Column({ type: 'enum', enum: Role, default: Role.User })
   role: Role;

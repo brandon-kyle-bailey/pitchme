@@ -10,6 +10,7 @@ import { Keyv } from 'keyv';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { UsersModule } from './modules/users/users.module';
+import { CaslModule } from './modules/casl/casl.module';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { UsersModule } from './modules/users/users.module';
           ),
           synchronize: false,
           autoLoadEntities: true,
-          migrations: [__dirname + '/migrations/*.js'],
+          migrations: [__dirname + '/migrations/*.{js,ts}'],
           migrationsRun: true,
           retryAttempts: 10,
           retryDelay: 5000,
@@ -77,6 +78,7 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     AuthModule,
     HealthModule,
+    CaslModule,
   ],
   controllers: [],
   providers: [],
